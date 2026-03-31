@@ -1,9 +1,5 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -12,103 +8,82 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-public class LoginApp extends JFrame {
-    private final JTextField userField;
-    private final JPasswordField passField;
-    private final JLabel statusLabel;
+public class LoginApp extends JFrame implements ActionListener {
+    private final JTextField txtUsuario;
+    private final JPasswordField txtContrasena;
+    private final JButton btnIniciarSesion;
+    private final JButton btnRegistrarse;
 
     public LoginApp() {
-        setTitle("Login Java");
-        setSize(420, 260);
-        setLocationRelativeTo(null);
+        setTitle("Login");
+        setSize(360, 220);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLocationRelativeTo(null);
+        setLayout(new GridLayout(3, 1, 8, 8));
 
-        JLabel title = new JLabel("Iniciar sesion", JLabel.CENTER);
-        title.setFont(new Font("SansSerif", Font.BOLD, 22));
-        title.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 0, 8, 0));
-        add(title, BorderLayout.NORTH);
+        JPanel panelUsuario = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelUsuario.add(new JLabel("Usuario:"));
+        txtUsuario = new JTextField(20);
+        panelUsuario.add(txtUsuario);
 
-        JPanel centerPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JPanel panelContrasena = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelContrasena.add(new JLabel("Contrasena:"));
+        txtContrasena = new JPasswordField(20);
+        txtContrasena.setEchoChar('*');
+        panelContrasena.add(txtContrasena);
 
-        JLabel userLabel = new JLabel("Usuario:");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        centerPanel.add(userLabel, gbc);
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        btnIniciarSesion = new JButton("Iniciar sesion");
+        btnRegistrarse = new JButton("Registrarse");
+        btnIniciarSesion.addActionListener(this);
+        btnRegistrarse.addActionListener(this);
+        panelBotones.add(btnIniciarSesion);
+        panelBotones.add(btnRegistrarse);
 
-        userField = new JTextField();
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        centerPanel.add(userField, gbc);
-
-        JLabel passLabel = new JLabel("Contrasena:");
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 0;
-        centerPanel.add(passLabel, gbc);
-
-        passField = new JPasswordField();
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.weightx = 1;
-        centerPanel.add(passField, gbc);
-
-        JButton loginButton = new JButton("Entrar");
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        gbc.weightx = 0;
-        centerPanel.add(loginButton, gbc);
-
-        add(centerPanel, BorderLayout.CENTER);
-
-        statusLabel = new JLabel(" ", JLabel.CENTER);
-        statusLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 14, 0));
-        add(statusLabel, BorderLayout.SOUTH);
-
-        loginButton.addActionListener(e -> login());
-        getRootPane().setDefaultButton(loginButton);
+        add(panelUsuario);
+        add(panelContrasena);
+        add(panelBotones);
     }
 
-    private void login() {
-        String user = userField.getText().trim();
-        String pass = new String(passField.getPassword());
-
-        if (user.isEmpty() || pass.isEmpty()) {
-            setStatus("Completa usuario y contrasena", Color.RED);
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == btnIniciarSesion) {
+            iniciarSesion();
             return;
         }
 
-        // Credenciales de ejemplo. Luego puedes cambiarlas por BD/API.
-        boolean success = user.equals("admin") && pass.equals("1234");
-
-        if (success) {
-            setStatus("Login correcto", new Color(0, 130, 0));
-            JOptionPane.showMessageDialog(this, "Bienvenido, " + user + "!");
-        } else {
-            setStatus("Usuario o contrasena incorrectos", Color.RED);
+        if (e.getSource() == btnRegistrarse) {
+            dispose();
+            new RegistroFrame().setVisible(true);
         }
     }
 
-    private void setStatus(String text, Color color) {
-        statusLabel.setText(text);
-        statusLabel.setForeground(color);
+    private void iniciarSesion() {
+        String usuario = txtUsuario.getText().trim();
+        String contrasena = new String(txtContrasena.getPassword()).trim();
+
+        if (usuario.isEmpty() || contrasena.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Debe ingresar su usuario y contrasena, si no esta registrado debe registrarse"
+            );
+            return;
+        }
+
+        Usuario encontrado = Datos.buscarPorCredenciales(usuario, contrasena);
+        if (encontrado == null) {
+            JOptionPane.showMessageDialog(this, "Usuario o contrasena incorrectos");
+            return;
+        }
+
+        dispose();
+        new PrincipalFrame().setVisible(true);
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {
-                // Usar look and feel por defecto si falla.
-            }
-            new LoginApp().setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> new LoginApp().setVisible(true));
     }
 }
